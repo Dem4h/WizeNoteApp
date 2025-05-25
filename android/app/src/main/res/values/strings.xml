@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">wizenote</string>
+    <string name="title_activity_main">wizenote</string>
+    <string name="package_name">com.wizenote.app</string>
+    <string name="custom_url_scheme">com.wizenote.app</string>
+</resources>
