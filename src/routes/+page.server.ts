@@ -1,42 +1,52 @@
 import * as pronote from "pawnote";
 import { credentials } from "../lib/_credentials.svelte.ts";
+import { redirect } from "@sveltejs/kit";
 //import { CapacitorCookies } from "@capacitor/core";
 
 export const load = async ({ cookies }) => {
   if (cookies.get("login") == undefined) {
     console.log("No Token");
     const handle = await pronote.createSessionHandle();
-    const login = await pronote.loginQrCode(handle, {
-      deviceUUID: credentials.deviceUUID,
-      pin: credentials.pin,
-      qr: JSON.parse(credentials.qr),
-    });
-    const account = await pronote.account(handle);
-    console.log(account);
-    console.log(login);
+    try {
+      const login = await pronote.loginQrCode(handle, {
+        deviceUUID: credentials.deviceUUID,
+        pin: credentials.pin,
+        qr: JSON.parse(credentials.qr),
+      });
 
-    cookies.set("login", JSON.stringify(login), { path: "/" });
-    return {
-      login,
-    };
+      cookies.set("login", JSON.stringify(login), { path: "/" });
+      return {
+        login,
+      };
+    } catch (error) {
+      if (error.name === "BadCredentialsError") {
+        redirect(302, "/login");
+      }
+    }
   } else {
     console.log("Token");
     const prev_login = await JSON.parse(cookies.get("login"));
-    console.log(prev_login);
     const handle = pronote.createSessionHandle();
-    const login = await pronote.loginToken(handle, {
-      deviceUUID: credentials.deviceUUID,
-      kind: prev_login.kind,
-      url: prev_login.url,
-      username: prev_login.username,
-      token: prev_login.token,
-    });
+    try {
+      const login = await pronote.loginToken(handle, {
+        deviceUUID: credentials.deviceUUID,
+        kind: prev_login.kind,
+        url: prev_login.url,
+        username: prev_login.username,
+        token: prev_login.token,
+      });
 
-    const account = await pronote.account(handle);
-    console.log(account);
-    return {
-      login,
-    };
+      return {
+        login,
+      };
+    } catch (error) {
+      if (error.name === "BadCredentialsError") {
+        cookies.delete("login", { path: "/" });
+
+        redirect(302, "/login");
+      }
+      throw error;
+    }
   }
   /*
 
